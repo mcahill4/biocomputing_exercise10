@@ -1,0 +1,60 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Nov 14 21:25:43 2018
+
+@author: michaelcahill
+"""
+
+### Custom likelihood function
+import pandas as pd
+import numpy as np
+from scipy.optimize import minimize
+from scipy.stats import norm
+from plotnine import *
+
+df=pd.read_csv("data.txt")
+print df
+a=ggplot(aes(x="x",y="y"),df)
+b=(a+geom_point())
+print b
+
+def nllike(p,obs):
+    B0=p[0]
+    B1=p[1]
+    sigma=p[2]
+
+    expected=B1*obs.x+B0
+    nll=-1*norm(expected,sigma).logpdf(obs.y).sum()
+    return nll
+
+initialGuess=np.array([1,1,1])
+fitSimple=minimize(nllike,initialGuess,method="Nelder-Mead",options={'disp': True},args=df)
+
+
+
+def nlquad(p,obs):
+    B0=p[0]
+    B1=p[1]
+    B2=p[2]
+    sigma=p[3]
+
+    expected=B0+B1*obs.x+B2*obs.x*obs.x
+    nlq=-1*norm(expected,sigma).logpdf(obs.y).sum()
+    return nlq
+
+initialGuess=np.array([1,1,1,1])
+fitComplex=minimize(nlquad,initialGuess,method="Nelder-Mead",options={'disp': True},args=df)
+
+
+
+from scipy import stats
+teststat=2*(fitSimple.fun-fitComplex.fun)
+df=len(fitComplex.x)-len(fitSimple.x)
+ratiotest=1-stats.chi2.cdf(teststat,df)
+
+
+print ratiotest
+
+#The p-value is 0.8991756, and is thus insignificant, so there is no real difference between
+#the linear and quadratic fits to this data. 
