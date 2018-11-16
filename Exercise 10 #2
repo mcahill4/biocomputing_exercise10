@@ -1,0 +1,58 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Nov 15 17:07:31 2018
+
+@author: michaelcahill
+"""
+
+import pandas
+import scipy
+import scipy.integrate as spint
+from plotnine import *
+
+def tumorSim(y,t0,RN,aNN,aNT,RT,aTT,aTN): #aNN=a11, aNT=a12, aTN=a21, aTT=a22
+    N=y[0]
+    T=y[1]
+    
+    dNdt=RN*(1-(N*aNN)-(T*aNT))*N
+    dTdt=RT*(1-(T*aTT)-(N*aTN))*T
+    
+    return [dNdt,dTdt]
+
+
+# case 1 when aNT<aNN and aTN<aTT
+times=range(0,100)
+y0=[0.1,0.1]
+params=(1,0.07,0.04,1,0.08,0.05)
+sim=spint.odeint(func=tumorSim,y0=y0,t=times,args=params)
+simDF=pandas.DataFrame({"t":times,"normal":sim[:,0],"tumor":sim[:,1]})
+a=ggplot(simDF,aes(x="t",y="normal"))+geom_line()+geom_line(simDF,aes(x="t",y="tumor"),color='red')+theme_classic()
+
+print a
+
+# case 2 when aNT>aNN and aTN<aTT
+times=range(0,100)
+y0=[0.1,0.1]
+params=(1,0.04,0.07,1,0.08,0.05)
+sim=spint.odeint(func=tumorSim,y0=y0,t=times,args=params)
+simDF=pandas.DataFrame({"t":times,"normal":sim[:,0],"tumor":sim[:,1]})
+b=ggplot(simDF,aes(x="t",y="normal"))+geom_line()+geom_line(simDF,aes(x="t",y="tumor"),color='red')+theme_classic()
+
+print b
+
+# case 3 when aNT<aNN and aTN>aTT
+times=range(0,100)
+y0=[0.1,0.1]
+params=(1,0.07,0.04,1,0.05,0.08)
+sim=spint.odeint(func=tumorSim,y0=y0,t=times,args=params)
+simDF=pandas.DataFrame({"t":times,"normal":sim[:,0],"tumor":sim[:,1]})
+c=ggplot(simDF,aes(x="t",y="normal"))+geom_line()+geom_line(simDF,aes(x="t",y="tumor"),color='red')+theme_classic()
+
+print c
+
+
+
+
+
+
